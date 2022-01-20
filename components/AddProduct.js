@@ -1,8 +1,7 @@
 import React, { useState } from "react";
 import { Button, Image, StyleSheet, Text, View } from "react-native";
 import * as ImagePicker from "expo-image-picker";
-import * as fi from "../firebase";
-import * as firebase from "firebase/app";
+// import { getDatabase, ref, onValue, set } from "firebase/database";
 
 const AddProduct = () => {
   const [image, setImage] = useState(null);
@@ -26,25 +25,26 @@ const AddProduct = () => {
   async function uploadImageAsync(uri) {
     // Why are we using XMLHttpRequest? See:
     // https://github.com/expo/expo/issues/2402#issuecomment-443726662
-    // const blob = await new Promise((resolve, reject) => {
-    //   const xhr = new XMLHttpRequest();
-    //   xhr.onload = function () {
-    //     resolve(xhr.response);
-    //   };
-    //   xhr.onerror = function (e) {
-    //     console.log(e);
-    //     reject(new TypeError("Network request failed"));
-    //   };
-    //   xhr.responseType = "blob";
-    //   xhr.open("GET", uri, true);
-    //   xhr.send(null);
+    const blob = await new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.onload = function () {
+        resolve(xhr.response);
+      };
+      xhr.onerror = function (e) {
+        console.log(e);
+        reject(new TypeError("Network request failed"));
+      };
+      xhr.responseType = "blob";
+      xhr.open("GET", uri, true);
+      xhr.send(null);
+    });
+
+    // const db = getDatabase();
+    // const reference = ref(db, "wine/");
+    // set(reference, {
+    //   name: "Hundred days",
+    //   price: "70k",
     // });
-    // const ref = firebase.storage().ref().child(new Date().toISOString());
-    // const ref = firebase.
-    // const snapshot = await ref.put(blob);
-    // // We're done with the blob, close and release it
-    // blob.close();
-    // return await snapshot.ref.getDownloadURL();
   }
   return (
     <View>

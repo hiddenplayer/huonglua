@@ -1,123 +1,99 @@
 import React from "react";
 import {
+    StyleSheet,
     SafeAreaView,
     View,
     Text,
-    StyleSheet,
     TouchableOpacity,
     Image,
-    FlatList
+    Animated
 } from "react-native";
+import { isIphoneX } from 'react-native-iphone-x-helper'
 
-import { icons, images, SIZES, COLORS, FONTS } from '../constants'
+import { icons, COLORS, SIZES, FONTS } from '../constants'
 
-const Home = ({ navigation }) => {
+const Restaurant = ({ route, navigation }) => {
 
-    // Dummy Datas
+    const scrollX = new Animated.Value(0);
+    const [restaurant, setRestaurant] = React.useState(null);
+    const [currentLocation, setCurrentLocation] = React.useState(null);
+    const [orderItems, setOrderItems] = React.useState([]);
 
-    const initialCurrentLocation = {
-        streetName: "Kuching",
-        gps: {
-            latitude: 1.5496614931250685,
-            longitude: 110.36381866919922
+    React.useEffect(() => {
+        let { item, currentLocation } = route.params;
+
+        setRestaurant(item)
+        setCurrentLocation(currentLocation)
+    })
+
+    function editOrder(action, menuId, price) {
+        let orderList = orderItems.slice()
+        let item = orderList.filter(a => a.menuId == menuId)
+
+        if (action == "+") {
+            if (item.length > 0) {
+                let newQty = item[0].qty + 1
+                item[0].qty = newQty
+                item[0].total = item[0].qty * price
+            } else {
+                const newItem = {
+                    menuId: menuId,
+                    qty: 1,
+                    price: price,
+                    total: price
+                }
+                orderList.push(newItem)
+            }
+
+            setOrderItems(orderList)
+        } else {
+            if (item.length > 0) {
+                if (item[0]?.qty > 0) {
+                    let newQty = item[0].qty - 1
+                    item[0].qty = newQty
+                    item[0].total = newQty * price
+                }
+            }
+
+            setOrderItems(orderList)
         }
     }
 
-    const categoryData = [
-        {
-            id: 1,
-            name: "Rice",
-            icon: icons.rice_bowl,
-        },
-    ]
+    function getOrderQty(menuId) {
+        let orderItem = orderItems.filter(a => a.menuId == menuId)
 
-    // price rating
-    const affordable = 1
-    const fairPrice = 2
-    const expensive = 3
+        if (orderItem.length > 0) {
+            return orderItem[0].qty
+        }
 
-    const restaurantData = [
-        {
-            id: 1,
-            name: "ByProgrammers Burger",
-            rating: 4.8,
-            categories: [5, 7],
-            priceRating: affordable,
-            photo: images.burger_restaurant_1,
-            duration: "30 - 45 min",
-            location: {
-                latitude: 1.5347282806345879,
-                longitude: 110.35632207358996,
-            },
-            courier: {
-                avatar: images.avatar_1,
-                name: "Amy"
-            },
-            menu: [
-                {
-                    menuId: 1,
-                    name: "Crispy Chicken Burger",
-                    photo: images.crispy_chicken_burger,
-                    description: "Burger with crispy chicken, cheese and lettuce",
-                    calories: 200,
-                    price: 10
-                },
-                {
-                    menuId: 2,
-                    name: "Crispy Chicken Burger with Honey Mustard",
-                    photo: images.honey_mustard_chicken_burger,
-                    description: "Crispy Chicken Burger with Honey Mustard Coleslaw",
-                    calories: 250,
-                    price: 15
-                },
-                {
-                    menuId: 3,
-                    name: "Crispy Baked French Fries",
-                    photo: images.baked_fries,
-                    description: "Crispy Baked French Fries",
-                    calories: 194,
-                    price: 8
-                }
-            ]
-        },
-    ]
-
-    const [categories, setCategories] = React.useState(categoryData)
-    const [selectedCategory, setSelectedCategory] = React.useState(null)
-    const [restaurants, setRestaurants] = React.useState(restaurantData)
-    const [currentLocation, setCurrentLocation] = React.useState(initialCurrentLocation)
-
-
-    function onSelectCategory(category) {
-        //filter restaurant
-        let restaurantList = restaurantData.filter(a => a.categories.includes(category.id))
-
-        setRestaurants(restaurantList)
-
-        setSelectedCategory(category)
+        return 0
     }
 
-    function getCategoryNameById(id) {
-        let category = categories.filter(a => a.id == id)
+    function getBasketItemCount() {
+        let itemCount = orderItems.reduce((a, b) => a + (b.qty || 0), 0)
 
-        if (category.length > 0)
-            return category[0].name
+        return itemCount
+    }
 
-        return ""
+    function sumOrder() {
+        let total = orderItems.reduce((a, b) => a + (b.total || 0), 0)
+
+        return total.toFixed(2)
     }
 
     function renderHeader() {
         return (
-            <View style={{ flexDirection: 'row', height: 50 }}>
+            <View style={{ flexDirection: 'row' }}>
                 <TouchableOpacity
                     style={{
                         width: 50,
                         paddingLeft: SIZES.padding * 2,
                         justifyContent: 'center'
                     }}
+                    onPress={() => navigation.goBack()}
                 >
                     <Image
-                        source={icons.nearby}
+                        source={icons.back}
                         resizeMode="contain"
                         style={{
                             width: 30,
@@ -126,18 +102,25 @@ const Home = ({ navigation }) => {
                     />
                 </TouchableOpacity>
 
-                <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+                {/* Restaurant Name Section */}
+                <View
+                    style={{
+                        flex: 1,
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                    }}
+                >
                     <View
                         style={{
-                            width: '70%',
-                            height: "100%",
-                            backgroundColor: COLORS.lightGray3,
+                            height: 50,
                             alignItems: 'center',
                             justifyContent: 'center',
-                            borderRadius: SIZES.radius
+                            paddingHorizontal: SIZES.padding * 3,
+                            borderRadius: SIZES.radius,
+                            backgroundColor: COLORS.lightGray3
                         }}
                     >
-                        <Text style={{ ...FONTS.h3 }}>{currentLocation.streetName}</Text>
+                        <Text style={{ ...FONTS.h3 }}>{restaurant?.name}</Text>
                     </View>
                 </View>
 
@@ -149,7 +132,7 @@ const Home = ({ navigation }) => {
                     }}
                 >
                     <Image
-                        source={icons.basket}
+                        source={icons.list}
                         resizeMode="contain"
                         style={{
                             width: 30,
@@ -161,192 +144,290 @@ const Home = ({ navigation }) => {
         )
     }
 
-    function renderMainCategories() {
-        const renderItem = ({ item }) => {
-            return (
-                <TouchableOpacity
-                    style={{
-                        padding: SIZES.padding,
-                        paddingBottom: SIZES.padding * 2,
-                        backgroundColor: (selectedCategory?.id == item.id) ? COLORS.primary : COLORS.white,
-                        borderRadius: SIZES.radius,
-                        alignItems: "center",
-                        justifyContent: "center",
-                        marginRight: SIZES.padding,
-                        ...styles.shadow
-                    }}
-                    onPress={() => onSelectCategory(item)}
-                >
-                    <View
-                        style={{
-                            width: 50,
-                            height: 50,
-                            borderRadius: 25,
-                            alignItems: "center",
-                            justifyContent: "center",
-                            backgroundColor: (selectedCategory?.id == item.id) ? COLORS.white : COLORS.lightGray
-                        }}
-                    >
-                        <Image
-                            source={item.icon}
-                            resizeMode="contain"
-                            style={{
-                                width: 30,
-                                height: 30
-                            }}
-                        />
-                    </View>
+    function renderFoodInfo() {
+        return (
+            <Animated.ScrollView
+                horizontal
+                pagingEnabled
+                scrollEventThrottle={16}
+                snapToAlignment="center"
+                showsHorizontalScrollIndicator={false}
+                onScroll={Animated.event([
+                    { nativeEvent: { contentOffset: { x: scrollX } } }
+                ], { useNativeDriver: false })}
+            >
+                {
+                    restaurant?.menu.map((item, index) => (
+                        <View
+                            key={`menu-${index}`}
+                            style={{ alignItems: 'center' }}
+                        >
+                            <View style={{ height: SIZES.height * 0.35 }}>
+                                {/* Food Image */}
+                                <Image
+                                    source={item.photo}
+                                    resizeMode="cover"
+                                    style={{
+                                        width: SIZES.width,
+                                        height: "100%"
+                                    }}
+                                />
 
-                    <Text
-                        style={{
-                            marginTop: SIZES.padding,
-                            color: (selectedCategory?.id == item.id) ? COLORS.white : COLORS.black,
-                            ...FONTS.body5
-                        }}
-                    >
-                        {item.name}
-                    </Text>
-                </TouchableOpacity>
-            )
-        }
+                                {/* Quantity */}
+                                <View
+                                    style={{
+                                        position: 'absolute',
+                                        bottom: - 20,
+                                        width: SIZES.width,
+                                        height: 50,
+                                        justifyContent: 'center',
+                                        flexDirection: 'row'
+                                    }}
+                                >
+                                    <TouchableOpacity
+                                        style={{
+                                            width: 50,
+                                            backgroundColor: COLORS.white,
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            borderTopLeftRadius: 25,
+                                            borderBottomLeftRadius: 25
+                                        }}
+                                        onPress={() => editOrder("-", item.menuId, item.price)}
+                                    >
+                                        <Text style={{ ...FONTS.body1 }}>-</Text>
+                                    </TouchableOpacity>
+
+                                    <View
+                                        style={{
+                                            width: 50,
+                                            backgroundColor: COLORS.white,
+                                            alignItems: 'center',
+                                            justifyContent: 'center'
+                                        }}
+                                    >
+                                        <Text style={{ ...FONTS.h2 }}>{getOrderQty(item.menuId)}</Text>
+                                    </View>
+
+                                    <TouchableOpacity
+                                        style={{
+                                            width: 50,
+                                            backgroundColor: COLORS.white,
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            borderTopRightRadius: 25,
+                                            borderBottomRightRadius: 25
+                                        }}
+                                        onPress={() => editOrder("+", item.menuId, item.price)}
+                                    >
+                                        <Text style={{ ...FONTS.body1 }}>+</Text>
+                                    </TouchableOpacity>
+                                </View>
+                            </View>
+
+                            {/* Name & Description */}
+                            <View
+                                style={{
+                                    width: SIZES.width,
+                                    alignItems: 'center',
+                                    marginTop: 15,
+                                    paddingHorizontal: SIZES.padding * 2
+                                }}
+                            >
+                                <Text style={{ marginVertical: 10, textAlign: 'center', ...FONTS.h2 }}>{item.name} - {item.price.toFixed(2)}</Text>
+                                <Text style={{ ...FONTS.body3 }}>{item.description}</Text>
+                            </View>
+
+                            {/* Calories */}
+                            <View
+                                style={{
+                                    flexDirection: 'row',
+                                    marginTop: 10
+                                }}
+                            >
+                                <Image
+                                    source={icons.fire}
+                                    style={{
+                                        width: 20,
+                                        height: 20,
+                                        marginRight: 10
+                                    }}
+                                />
+
+                                <Text style={{
+                                    ...FONTS.body3, color: COLORS.darygray
+                                }}>{item.calories.toFixed(2)} cal</Text>
+                            </View>
+                        </View>
+                    ))
+                }
+            </Animated.ScrollView>
+        )
+    }
+
+    function renderDots() {
+
+        const dotPosition = Animated.divide(scrollX, SIZES.width)
 
         return (
-            <View style={{ padding: SIZES.padding * 2 }}>
-                <Text style={{ ...FONTS.h1 }}>Main</Text>
-                <Text style={{ ...FONTS.h1 }}>Categories</Text>
+            <View style={{ height: 30 }}>
+                <View
+                    style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        height: SIZES.padding
+                    }}
+                >
+                    {restaurant?.menu.map((item, index) => {
 
-                <FlatList
-                    data={categories}
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                    keyExtractor={item => `${item.id}`}
-                    renderItem={renderItem}
-                    contentContainerStyle={{ paddingVertical: SIZES.padding * 2 }}
-                />
+                        const opacity = dotPosition.interpolate({
+                            inputRange: [index - 1, index, index + 1],
+                            outputRange: [0.3, 1, 0.3],
+                            extrapolate: "clamp"
+                        })
+
+                        const dotSize = dotPosition.interpolate({
+                            inputRange: [index - 1, index, index + 1],
+                            outputRange: [SIZES.base * 0.8, 10, SIZES.base * 0.8],
+                            extrapolate: "clamp"
+                        })
+
+                        const dotColor = dotPosition.interpolate({
+                            inputRange: [index - 1, index, index + 1],
+                            outputRange: [COLORS.darkgray, COLORS.primary, COLORS.darkgray],
+                            extrapolate: "clamp"
+                        })
+
+                        return (
+                            <Animated.View
+                                key={`dot-${index}`}
+                                opacity={opacity}
+                                style={{
+                                    borderRadius: SIZES.radius,
+                                    marginHorizontal: 6,
+                                    width: dotSize,
+                                    height: dotSize,
+                                    backgroundColor: dotColor
+                                }}
+                            />
+                        )
+                    })}
+                </View>
             </View>
         )
     }
 
-    function renderRestaurantList() {
-        const renderItem = ({ item }) => (
-            <TouchableOpacity
-                style={{ marginBottom: SIZES.padding * 2 }}
-                onPress={() => navigation.navigate("Restaurant", {
-                    item,
-                    currentLocation
-                })}
-            >
-                {/* Image */}
+    function renderOrder() {
+        return (
+            <View>
+                {
+                    renderDots()
+                }
                 <View
                     style={{
-                        marginBottom: SIZES.padding
+                        backgroundColor: COLORS.white,
+                        borderTopLeftRadius: 40,
+                        borderTopRightRadius: 40
                     }}
                 >
-                    <Image
-                        source={item.photo}
-                        resizeMode="cover"
-                        style={{
-                            width: "100%",
-                            height: 200,
-                            borderRadius: SIZES.radius
-                        }}
-                    />
-
-                    <View
-                        style={{
-                            position: 'absolute',
-                            bottom: 0,
-                            height: 50,
-                            width: SIZES.width * 0.3,
-                            backgroundColor: COLORS.white,
-                            borderTopRightRadius: SIZES.radius,
-                            borderBottomLeftRadius: SIZES.radius,
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            ...styles.shadow
-                        }}
-                    >
-                        <Text style={{ ...FONTS.h4 }}>{item.duration}</Text>
-                    </View>
-                </View>
-
-                {/* Restaurant Info */}
-                <Text style={{ ...FONTS.body2 }}>{item.name}</Text>
-
-                <View
-                    style={{
-                        marginTop: SIZES.padding,
-                        flexDirection: 'row'
-                    }}
-                >
-                    {/* Rating */}
-                    <Image
-                        source={icons.star}
-                        style={{
-                            height: 20,
-                            width: 20,
-                            tintColor: COLORS.primary,
-                            marginRight: 10
-                        }}
-                    />
-                    <Text style={{ ...FONTS.body3 }}>{item.rating}</Text>
-
-                    {/* Categories */}
                     <View
                         style={{
                             flexDirection: 'row',
-                            marginLeft: 10
+                            justifyContent: 'space-between',
+                            paddingVertical: SIZES.padding * 2,
+                            paddingHorizontal: SIZES.padding * 3,
+                            borderBottomColor: COLORS.lightGray2,
+                            borderBottomWidth: 1
                         }}
                     >
-                        {
-                            item.categories.map((categoryId) => {
-                                return (
-                                    <View
-                                        style={{ flexDirection: 'row' }}
-                                        key={categoryId}
-                                    >
-                                        <Text style={{ ...FONTS.body3 }}>{getCategoryNameById(categoryId)}</Text>
-                                        <Text style={{ ...FONTS.h3, color: COLORS.darkgray }}> . </Text>
-                                    </View>
-                                )
-                            })
-                        }
+                        <Text style={{ ...FONTS.h3 }}>{getBasketItemCount()} items in Cart</Text>
+                        <Text style={{ ...FONTS.h3 }}>${sumOrder()}</Text>
+                    </View>
 
-                        {/* Price */}
-                        {
-                            [1, 2, 3].map((priceRating) => (
-                                <Text
-                                    key={priceRating}
-                                    style={{
-                                        ...FONTS.body3,
-                                        color: (priceRating <= item.priceRating) ? COLORS.black : COLORS.darkgray
-                                    }}
-                                >$</Text>
-                            ))
-                        }
+                    <View
+                        style={{
+                            flexDirection: 'row',
+                            justifyContent: 'space-between',
+                            paddingVertical: SIZES.padding * 2,
+                            paddingHorizontal: SIZES.padding * 3
+                        }}
+                    >
+                        <View style={{ flexDirection: 'row' }}>
+                            <Image
+                                source={icons.pin}
+                                resizeMode="contain"
+                                style={{
+                                    width: 20,
+                                    height: 20,
+                                    tintColor: COLORS.darkgray
+                                }}
+                            />
+                            <Text style={{ marginLeft: SIZES.padding, ...FONTS.h4 }}>Location</Text>
+                        </View>
+
+                        <View style={{ flexDirection: 'row' }}>
+                            <Image
+                                source={icons.master_card}
+                                resizeMode="contain"
+                                style={{
+                                    width: 20,
+                                    height: 20,
+                                    tintColor: COLORS.darkgray
+                                }}
+                            />
+                            <Text style={{ marginLeft: SIZES.padding, ...FONTS.h4 }}>8888</Text>
+                        </View>
+                    </View>
+
+                    {/* Order Button */}
+                    <View
+                        style={{
+                            padding: SIZES.padding * 2,
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                        }}
+                    >
+                        <TouchableOpacity
+                            style={{
+                                width: SIZES.width * 0.9,
+                                padding: SIZES.padding,
+                                backgroundColor: COLORS.primary,
+                                alignItems: 'center',
+                                borderRadius: SIZES.radius
+                            }}
+                            onPress={() => navigation.navigate("OrderDelivery", {
+                                restaurant: restaurant,
+                                currentLocation: currentLocation
+                            })}
+                        >
+                            <Text style={{ color: COLORS.white, ...FONTS.h2 }}>Order</Text>
+                        </TouchableOpacity>
                     </View>
                 </View>
-            </TouchableOpacity>
-        )
 
-        return (
-            <FlatList
-                data={restaurants}
-                keyExtractor={item => `${item.id}`}
-                renderItem={renderItem}
-                contentContainerStyle={{
-                    paddingHorizontal: SIZES.padding * 2,
-                    paddingBottom: 30
-                }}
-            />
+                {isIphoneX() &&
+                    <View
+                        style={{
+                            position: 'absolute',
+                            bottom: -34,
+                            left: 0,
+                            right: 0,
+                            height: 34,
+                            backgroundColor: COLORS.white
+                        }}
+                    >
+                    </View>
+                }
+            </View>
         )
     }
 
     return (
         <SafeAreaView style={styles.container}>
             {renderHeader()}
-            {renderMainCategories()}
-            {renderRestaurantList()}
+            {renderFoodInfo()}
+            {renderOrder()}
         </SafeAreaView>
     )
 }
@@ -354,18 +435,8 @@ const Home = ({ navigation }) => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: COLORS.lightGray4
-    },
-    shadow: {
-        shadowColor: "#000",
-        shadowOffset: {
-            width: 0,
-            height: 3,
-        },
-        shadowOpacity: 0.1,
-        shadowRadius: 3,
-        elevation: 1,
+        backgroundColor: COLORS.lightGray2
     }
 })
 
-export default Home;
+export default Restaurant;

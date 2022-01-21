@@ -41,7 +41,7 @@ export const Home = ({ navigation }) => {
             width: 50,
           }}
         >
-          <Image source={cart} style={{ width: 50, height: 50 }} />
+          <Image source={cart} style={{ width: 60, height: 50 }} />
         </TouchableOpacity>
       </View>
     );
@@ -91,7 +91,11 @@ export const Home = ({ navigation }) => {
             >
               <Image style={styles.product_img} source={product.src} />
               <Text style={styles.product_name}>{product.name}</Text>
-              <Text style={styles.product_price}>{product.price}</Text>
+              <Text style={styles.product_price}>
+                {product.price
+                  .toString()
+                  .replace(/\B(?=(\d{3})+(?!\d))/g, ",") + " đ"}
+              </Text>
             </TouchableOpacity>
           );
         })}
@@ -119,6 +123,7 @@ const styles = StyleSheet.create({
     height: 50,
     justifyContent: "space-between",
     alignItems: "center",
+    marginRight: 10,
   },
   title: {
     backgroundColor: COLORS.secondry,
@@ -154,6 +159,7 @@ const styles = StyleSheet.create({
     borderRadius: 25,
   },
   type_txt: {
+    color: COLORS.black,
     lineHeight: 28,
     fontWeight: "400",
     textAlign: "center",

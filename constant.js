@@ -1,5 +1,8 @@
+import { Dimensions } from "react-native";
+const { width, height } = Dimensions.get("window");
+
 export const COLORS = {
-  primary: "#6198CF",
+  primary: "#F39C12",
   secondry: "#D5D8DC",
   secondry2: "#EAECEE",
 
@@ -8,6 +11,8 @@ export const COLORS = {
 };
 
 export const SIZES = {
+  width,
+  height,
   paddingTop: 40,
   padding: 10,
   padding2: 15,

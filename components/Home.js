@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   StyleSheet,
   View,
@@ -10,12 +10,32 @@ import {
 import { COLORS, SIZES, THEME } from "../constant";
 import { list_types, list_products } from "../database";
 const logo = require("../assets/logo.png");
-const cart = require("../assets/icons/cart.png");
+const img_cart = require("../assets/icons/cart.png");
 
 export const Home = ({ navigation }) => {
-  const [types, setTypes] = useState(list_types);
   const [selectedType, setSelectedType] = useState(1);
   const [products, setProducts] = useState(list_products);
+  const [cart, setCart] = useState([]);
+  const [ID, setID] = useState(0);
+
+  useEffect(() => {
+    cart.length > 0 && navigate(ID);
+  }, [cart, ID]);
+
+  function updateCart(item) {
+    if (!cart.includes(item)) {
+      item.qty = 0;
+      setCart([item, ...cart]);
+    } else {
+      let index = cart.indexOf(item);
+      if (index == ID) navigate(index);
+      else setID(index);
+    }
+  }
+
+  function navigate(ID) {
+    navigation.navigate("Detail", { cart: cart, ID: ID });
+  }
 
   function onSelect(type) {
     let showcases = list_products.filter((a) => a.type === type);
@@ -23,7 +43,6 @@ export const Home = ({ navigation }) => {
     setSelectedType(type);
     renderTypes();
   }
-  const handleCart = () => {};
 
   function renderHeader() {
     return (
@@ -33,7 +52,7 @@ export const Home = ({ navigation }) => {
         </TouchableOpacity>
 
         <View style={styles.title}>
-          <Text style={THEME.h1}>Hương Lúa</Text>
+          <Text style={THEME.h5}>Hương Lúa</Text>
         </View>
 
         <TouchableOpacity
@@ -41,7 +60,7 @@ export const Home = ({ navigation }) => {
             width: 50,
           }}
         >
-          <Image source={cart} style={{ width: 60, height: 50 }} />
+          <Image source={img_cart} style={{ width: 60, height: 50 }} />
         </TouchableOpacity>
       </View>
     );
@@ -86,12 +105,12 @@ export const Home = ({ navigation }) => {
           return (
             <TouchableOpacity
               key={index}
-              onPress={() => navigation.navigate("Detail", { item: product })}
+              onPress={() => updateCart(product)}
               style={styles.product}
             >
               <Image style={styles.product_img} source={product.src} />
-              <Text style={styles.product_name}>{product.name}</Text>
-              <Text style={styles.product_price}>
+              <Text style={THEME.h3}>{product.name}</Text>
+              <Text style={THEME.txt}>
                 {product.price
                   .toString()
                   .replace(/\B(?=(\d{3})+(?!\d))/g, ",") + " đ"}
@@ -136,7 +155,7 @@ const styles = StyleSheet.create({
   types: {
     display: "flex",
     flexDirection: "row",
-    marginTop: SIZES.padding2,
+    marginVertical: SIZES.padding2,
   },
   type: {
     padding: SIZES.padding,
@@ -171,7 +190,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   products: {
-    marginBottom: 120,
+    marginBottom: 140,
   },
   product: {
     marginTop: 20,
@@ -181,13 +200,6 @@ const styles = StyleSheet.create({
     height: 200,
     width: "100%",
     borderRadius: 30,
-  },
-  product_name: {
-    fontSize: SIZES.heading,
-    fontWeight: SIZES.headingWeight,
-    marginTop: SIZES.padding,
-  },
-  product_price: {
-    fontSize: SIZES.body,
+    marginBottom: 10,
   },
 });

@@ -16,17 +16,26 @@ export const SIZES = {
   paddingTop: 40,
   padding: 10,
   padding2: 15,
-
-  title: 26,
-  titleWeight: "500",
-  heading: 22,
-  headingWeight: "500",
-  body: 14,
 };
 
 export const THEME = {
   h1: {
-    fontSize: SIZES.title,
-    fontWeight: SIZES.titleWeight,
+    fontSize: 32,
+    fontWeight: "500",
+  },
+  h3: {
+    fontSize: 22,
+    fontWeight: "500",
+  },
+  h4: {
+    fontSize: 24,
+    fontWeight: "300",
+  },
+  h5: {
+    fontSize: 20,
+    fontWeight: "300",
+  },
+  txt: {
+    fontSize: 18,
   },
 };

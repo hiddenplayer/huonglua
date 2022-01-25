@@ -4,29 +4,47 @@ import {
   TouchableOpacity,
   View,
   Image,
-  ScrollView,
   Animated,
+  Button,
 } from "react-native";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { COLORS, SIZES, THEME } from "../constant";
-import { list_products } from "../database";
 const back = require("../assets/icons/back.png");
 const list = require("../assets/icons/list.png");
 
 const Detail = ({ navigation, route }) => {
   const scrollX = new Animated.Value(0);
-  const [count, setCount] = useState(1);
-  const [cart, setCart] = useState(list_products);
 
-  let { item } = route.params;
-  // list = [...cart, item];
-  // setCart(list);
+  let { cart, ID } = route.params;
+  let total = 0;
+  cart.forEach((element) => {
+    total += element.price * element.qty;
+  });
+  const [price, setPrice] = useState(total);
 
-  // useEffect(() => {
-  //   let { item } = route.params;
-  //   let list = [item, item];
-  //   setCart(list);
-  // });
+  function editOrder(action, id) {
+    if (action == "+") {
+      cart[id].qty += 1;
+    } else {
+      if (cart[id].qty > 0) {
+        cart[id].qty -= 1;
+      }
+    }
+
+    let price = 0;
+    cart.forEach((element) => {
+      price += element.price * element.qty;
+    });
+    setPrice(price);
+  }
+
+  function countItem() {
+    let count = 0;
+    cart.forEach((element) => {
+      count += element.qty;
+    });
+    return count;
+  }
 
   function renderHeader() {
     return (
@@ -36,7 +54,7 @@ const Detail = ({ navigation, route }) => {
         </TouchableOpacity>
 
         <View style={styles.title}>
-          <Text style={THEME.h1}>Hương Lúa</Text>
+          <Text style={THEME.h5}>Hương Lúa</Text>
         </View>
 
         <TouchableOpacity
@@ -50,51 +68,57 @@ const Detail = ({ navigation, route }) => {
     );
   }
 
-  function renderCart() {
-    return (
-      <Animated.ScrollView
-        horizontal
-        pagingEnabled
-        // scrollEventThrottle={16}
-        // snapToAlignment="center"
-        showsHorizontalScrollIndicator={false}
-        onScroll={Animated.event(
-          [{ nativeEvent: { contentOffset: { x: scrollX } } }],
-          { useNativeDriver: false }
-        )}
-      >
-        {list_products.map((product, index) => {
-          return (
-            <View key={index} style={styles.showcase}>
-              <Image source={product?.src} style={styles.image} />
+  class renderCart {
+    constructor() {}
 
-              <View style={styles.count}>
-                <Text
-                  style={styles.count_txt}
-                  onPress={() => setCount(count - 1)}
-                >
-                  -
-                </Text>
-                <Text style={styles.count_txt}>{count}</Text>
-                <Text
-                  style={styles.count_txt}
-                  onPress={() => setCount(count + 1)}
-                >
-                  +
+    render() {
+      return (
+        <Animated.ScrollView
+          horizontal
+          pagingEnabled
+          showsHorizontalScrollIndicator={false}
+          ref={(scrooler) => {
+            this.scrooler = scrooler;
+          }}
+          onContentSizeChange={() =>
+            this.scrooler.scrollTo({
+              x: SIZES.width * ID,
+              y: 0,
+              animated: false,
+            })
+          }
+          onScroll={Animated.event(
+            [{ nativeEvent: { contentOffset: { x: scrollX } } }],
+            { useNativeDriver: false }
+          )}
+        >
+          {cart.map((product, index) => {
+            return (
+              <View key={index} style={styles.showcase}>
+                <Image source={product?.src} style={styles.image} />
+
+                <View style={styles.count}>
+                  <Text style={THEME.h4} onPress={() => editOrder("-", index)}>
+                    -
+                  </Text>
+                  <Text style={THEME.h4}>{cart[index].qty}</Text>
+                  <Text style={THEME.h4} onPress={() => editOrder("+", index)}>
+                    +
+                  </Text>
+                </View>
+
+                <Text style={THEME.h1}>{product?.name}</Text>
+                <Text style={styles.price}>
+                  {product?.price
+                    .toString()
+                    .replace(/\B(?=(\d{3})+(?!\d))/g, ",") + " đ"}
                 </Text>
               </View>
-
-              <Text style={styles.name}>{product?.name}</Text>
-              <Text style={styles.price}>
-                {product?.price
-                  .toString()
-                  .replace(/\B(?=(\d{3})+(?!\d))/g, ",") + " đ"}
-              </Text>
-            </View>
-          );
-        })}
-      </Animated.ScrollView>
-    );
+            );
+          })}
+        </Animated.ScrollView>
+      );
+    }
   }
 
   function renderDots() {
@@ -103,7 +127,7 @@ const Detail = ({ navigation, route }) => {
     return (
       <View style={{ height: 30 }}>
         <View style={styles.dots}>
-          {list_products?.map((item, index) => {
+          {cart?.map((item, index) => {
             const opacity = dotPosition.interpolate({
               inputRange: [index - 1, index, index + 1],
               outputRange: [0.3, 1, 0.3],
@@ -141,11 +165,32 @@ const Detail = ({ navigation, route }) => {
     );
   }
 
+  function renderOrder() {
+    return (
+      <View style={styles.order}>
+        <View style={styles.order_price}>
+          {countItem() > 1 ? (
+            <Text style={THEME.h3}>{countItem() + " items in Cart"}</Text>
+          ) : (
+            <Text style={THEME.h3}>{countItem() + " item in Cart"}</Text>
+          )}
+          <Text style={THEME.h3}>{price + " đ"}</Text>
+        </View>
+        <View>
+          <TouchableOpacity style={styles.order_btn}>
+            <Text style={styles.order_txt}>Order</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       {renderHeader()}
-      {renderCart()}
-      {renderDots()}
+      {cart.length > 0 && new renderCart().render()}
+      {cart.length > 0 && renderDots()}
+      {renderOrder()}
     </View>
   );
 };
@@ -155,11 +200,12 @@ export default Detail;
 const styles = StyleSheet.create({
   container: {
     paddingTop: SIZES.paddingTop,
-    paddingHorizontal: SIZES.padding,
     backgroundColor: COLORS.secondry2,
+    height: "100%",
   },
   header: {
     flexDirection: "row",
+    paddingHorizontal: SIZES.padding,
     height: 50,
     justifyContent: "space-between",
     alignItems: "center",
@@ -175,8 +221,9 @@ const styles = StyleSheet.create({
   },
   showcase: {
     alignItems: "center",
-    justifyContent: "center",
-    marginTop: 70,
+    top: 70,
+    display: "flex",
+    flex: 1,
     width: SIZES.width - SIZES.padding * 2,
   },
   image: {
@@ -194,21 +241,34 @@ const styles = StyleSheet.create({
     width: 150,
     padding: SIZES.padding,
   },
-  count_txt: {
-    fontSize: SIZES.heading,
-  },
-  name: {
-    fontSize: 32,
-    fontWeight: "500",
-  },
-  price: {
-    fontSize: 18,
-  },
   dots: {
-    marginTop: SIZES.padding2,
     flexDirection: "row",
-    alignItems: "center",
     justifyContent: "center",
     height: SIZES.padding,
+    marginBottom: 100,
+  },
+  order: {
+    bottom: 0,
+    backgroundColor: COLORS.white,
+    borderRadius: 30,
+    width: "100%",
+    paddingBottom: 40,
+    paddingHorizontal: SIZES.padding,
+  },
+  order_price: {
+    display: "flex",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    margin: SIZES.padding2,
+  },
+  order_btn: {
+    backgroundColor: COLORS.primary,
+    borderRadius: 7,
+  },
+  order_txt: {
+    style: THEME.h5,
+    textAlign: "center",
+    padding: SIZES.padding,
+    tintColor: COLORS.white,
   },
 });
